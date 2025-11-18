@@ -1,39 +1,6 @@
 import SwiftUI
 import Combine
 
-enum MediaType: Codable {
-    case photo
-    case video
-}
-
-struct Folder: Identifiable, Codable {
-    let id: UUID
-    var name: String
-    let dateCreated: Date
-    
-    init(id: UUID = UUID(), name: String, dateCreated: Date = Date()) {
-        self.id = id
-        self.name = name
-        self.dateCreated = dateCreated
-    }
-}
-
-struct MediaItem: Identifiable, Codable {
-    let id: UUID
-    let fileName: String
-    let type: MediaType
-    let dateAdded: Date
-    var folderId: UUID?
-    
-    var fileURL: URL {
-        MediaLibrary.storageDirectory.appendingPathComponent(fileName)
-    }
-    
-    var year: Int {
-        Calendar.current.component(.year, from: dateAdded)
-    }
-}
-
 final class MediaLibrary: ObservableObject {
     @Published var items: [MediaItem] = []
     @Published var folders: [Folder] = []
@@ -104,44 +71,96 @@ final class MediaLibrary: ObservableObject {
     }
     
     func deleteFolder(_ folder: Folder) {
-        // Move items out of folder (set folderId to nil)
+        // Remove folder from all items that contain it
         items = items.map { item in
-            if item.folderId == folder.id {
-                return MediaItem(
-                    id: item.id,
-                    fileName: item.fileName,
-                    type: item.type,
-                    dateAdded: item.dateAdded,
-                    folderId: nil
-                )
-            }
-            return item
+            var updatedItem = item
+            updatedItem.folderIds.removeAll { $0 == folder.id }
+            return updatedItem
         }
         folders.removeAll { $0.id == folder.id }
         saveFolders()
         saveItems()
     }
     
-    func moveItem(_ item: MediaItem, toFolder folderId: UUID?) {
+    func addItemToFolder(_ item: MediaItem, folderId: UUID) {
         if let index = items.firstIndex(where: { $0.id == item.id }) {
-            items[index] = MediaItem(
-                id: item.id,
-                fileName: item.fileName,
-                type: item.type,
-                dateAdded: item.dateAdded,
-                folderId: folderId
-            )
+            if !items[index].folderIds.contains(folderId) {
+                items[index].folderIds.append(folderId)
+                saveItems()
+            }
+        }
+    }
+    
+    func removeItemFromFolder(_ item: MediaItem, folderId: UUID) {
+        if let index = items.firstIndex(where: { $0.id == item.id }) {
+            items[index].folderIds.removeAll { $0 == folderId }
             saveItems()
         }
     }
     
+    func toggleItemInFolder(_ item: MediaItem, folderId: UUID) {
+        if let index = items.firstIndex(where: { $0.id == item.id }) {
+            if items[index].folderIds.contains(folderId) {
+                items[index].folderIds.removeAll { $0 == folderId }
+            } else {
+                items[index].folderIds.append(folderId)
+            }
+            saveItems()
+        }
+    }
+    
+    // Legacy method for compatibility
+    func moveItem(_ item: MediaItem, toFolder folderId: UUID?) {
+        if let folderId = folderId {
+            // Remove from all folders first, then add to this one
+            if let index = items.firstIndex(where: { $0.id == item.id }) {
+                items[index].folderIds = [folderId]
+                saveItems()
+            }
+        } else {
+            // Remove from all folders
+            if let index = items.firstIndex(where: { $0.id == item.id }) {
+                items[index].folderIds = []
+                saveItems()
+            }
+        }
+    }
+    
     func itemsInFolder(_ folderId: UUID?) -> [MediaItem] {
-        items.filter { $0.folderId == folderId }
+        guard let folderId = folderId else {
+            return items // All items
+        }
+        return items.filter { $0.folderIds.contains(folderId) }
     }
     
     func itemsGroupedByYear(folderId: UUID? = nil) -> [Int: [MediaItem]] {
-        let filteredItems = folderId == nil ? items : items.filter { $0.folderId == folderId }
+        let filteredItems = folderId == nil ? items : items.filter { $0.folderIds.contains(folderId!) }
         return Dictionary(grouping: filteredItems) { $0.year }
+    }
+    
+    func deleteItems(_ itemsToDelete: [MediaItem]) {
+        let idsToDelete = Set(itemsToDelete.map { $0.id })
+        
+        // Remove files
+        for item in itemsToDelete {
+            try? FileManager.default.removeItem(at: item.fileURL)
+        }
+        
+        // Remove from items
+        items.removeAll { idsToDelete.contains($0.id) }
+        saveItems()
+    }
+    
+    func addItemsToFolder(_ itemsToAdd: [MediaItem], folderId: UUID) {
+        for item in itemsToAdd {
+            addItemToFolder(item, folderId: folderId)
+        }
+    }
+    
+    func removeItemsFromFolder(_ itemsToRemove: [MediaItem], folderId: UUID) {
+        for item in itemsToRemove {
+            removeItemFromFolder(item, folderId: folderId)
+        }
     }
     
     func importImage(_ image: UIImage, folderId: UUID? = nil) {
@@ -159,7 +178,7 @@ final class MediaLibrary: ObservableObject {
                 fileName: fileName,
                 type: .photo,
                 dateAdded: Date(),
-                folderId: folderId
+                folderIds: folderId != nil ? [folderId!] : []
             )
             
             items.insert(newItem, at: 0) // Add to beginning
@@ -184,7 +203,7 @@ final class MediaLibrary: ObservableObject {
                 fileName: fileName,
                 type: .photo,
                 dateAdded: Date(),
-                folderId: folderId
+                folderIds: folderId != nil ? [folderId!] : []
             )
             
             items.insert(newItem, at: 0)
@@ -208,7 +227,7 @@ final class MediaLibrary: ObservableObject {
                 fileName: fileName,
                 type: .video,
                 dateAdded: Date(),
-                folderId: folderId
+                folderIds: folderId != nil ? [folderId!] : []
             )
             
             items.insert(newItem, at: 0)
@@ -227,3 +246,4 @@ final class MediaLibrary: ObservableObject {
         saveItems()
     }
 }
+
