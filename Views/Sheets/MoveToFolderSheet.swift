@@ -18,7 +18,7 @@ struct MoveToFolderSheet: View {
                         } label: {
                             HStack {
                                 Image(systemName: "house.fill")
-                                    .foregroundColor(.accentColor)
+                                    .foregroundColor(Color.primaryAccent)
                                 Text("Remove from Album")
                                     .foregroundColor(.primary)
                                 Spacer()
@@ -36,7 +36,7 @@ struct MoveToFolderSheet: View {
                             } label: {
                                 HStack {
                                     Image(systemName: "folder.fill")
-                                        .foregroundColor(.accentColor)
+                                        .foregroundColor(Color.primaryAccent)
                                     Text(folder.name)
                                         .foregroundColor(.primary)
                                     Spacer()

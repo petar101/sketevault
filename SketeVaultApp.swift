@@ -8,6 +8,7 @@ struct SketeVaultApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(library)
+                .preferredColorScheme(.dark) // Force dark mode
         }
     }
 }

@@ -15,7 +15,7 @@ struct FolderCard: View {
                     
                     Image(systemName: "folder.fill")
                         .font(.system(size: 28, weight: .medium))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(Color.primaryAccent)
                 }
                 
                 VStack(spacing: 4) {

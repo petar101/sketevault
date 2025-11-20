@@ -15,10 +15,10 @@ struct MediaThumbnailView: View {
                     .clipped()
             } else {
                 RoundedRectangle(cornerRadius: AppCornerRadius.small)
-                    .fill(Color(.systemGray5))
+                    .fill(Color.darkSurface)
                     .overlay {
                         ProgressView()
-                            .tint(.accentColor)
+                            .tint(Color.primaryAccent)
                     }
             }
 

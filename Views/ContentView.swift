@@ -51,19 +51,17 @@ struct ContentView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.large)
+            .navigationTitle(selectedFolderId == nil ? "" : (currentFolder?.name ?? "Album"))
             .toolbar {
+                // Logo and title in the large title area
                 ToolbarItem(placement: .principal) {
                     if selectedFolderId == nil {
                         HStack(spacing: 10) {
-                            AppLogo()
-                            Text("Skete Vault")
-                                .font(AppTypography.title)
+                            AppLogo(size: 32)
+                            Text("Vault")
+                                .font(.system(size: 34, weight: .bold))
                                 .foregroundColor(.primary)
                         }
-                    } else {
-                        Text(currentFolder?.name ?? "Album")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.primary)
                     }
                 }
                 
@@ -76,11 +74,12 @@ struct ContentView: View {
                         } label: {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.accentColor)
+                                .foregroundColor(Color.primaryAccent)
                         }
                     }
                 }
                 
+                // Buttons in toolbar below the title
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     if isSelectionMode {
                         selectionModeToolbar
@@ -89,6 +88,8 @@ struct ContentView: View {
                     }
                 }
             }
+            .toolbarBackground(Color.appBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .fileImporter(
                 isPresented: $showFileImporter,
                 allowedContentTypes: [.image, .movie],
@@ -167,13 +168,13 @@ struct ContentView: View {
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.system(size: 18))
-                .foregroundColor(.accentColor)
+                .foregroundColor(Color.primaryAccent)
         }
         
         if !selectedItems.isEmpty {
             Text("\(selectedItems.count)")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.accentColor)
+                .foregroundColor(Color.primaryAccent)
                 .padding(.trailing, 4)
         }
         
@@ -185,7 +186,7 @@ struct ContentView: View {
         } label: {
             Text("Done")
                 .font(.system(size: 17, weight: .medium))
-                .foregroundColor(.accentColor)
+                .foregroundColor(Color.primaryAccent)
         }
     }
     
@@ -197,7 +198,7 @@ struct ContentView: View {
             } label: {
                 Image(systemName: "folder.badge.plus")
                     .font(.system(size: 18))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(Color.primaryAccent)
             }
         }
         
@@ -208,7 +209,7 @@ struct ContentView: View {
         } label: {
             Image(systemName: "checkmark.circle")
                 .font(.system(size: 18))
-                .foregroundColor(.accentColor)
+                .foregroundColor(Color.primaryAccent)
         }
         
         Button {
@@ -216,7 +217,7 @@ struct ContentView: View {
         } label: {
             Image(systemName: "plus")
                 .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.accentColor)
+                .foregroundColor(Color.primaryAccent)
         }
     }
     
